@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Customer {
+    id_customer   Int       @id @default(autoincrement())
+    device_id     String    @unique
+    device_name   String?
+    device_type   String?
+    device_size   String?
+    device_notes  String?
+    full_name     String
+    date_of_birth DateTime?
+    weight        Float
+    height        Float
+    email         String?   @unique
+    password      String
+    created_at    DateTime  @default(now())
+    created_by    Int
+    updated_at    DateTime?
+    updated_by    Int?
+    is_active     Boolean   @default(true)
+}
+
+model User {
+    id_user    Int       @id @default(autoincrement())
+    full_name  String
+    email      String?   @unique
+    password   String
+    created_at DateTime  @default(now())
+    created_by Int
+    updated_at DateTime?
+    updated_by Int?
+    is_active  Boolean   @default(true)
+}
+
+model TumblerLog {
+    id_tumbler_log Int      @id @default(autoincrement())
+    id_customer    Int
+    date_time      DateTime @default(now())
+}
+
+model TumblerLogDetail {
+    id_tumbler_log_detail Int      @id @default(autoincrement())
+    id_tumbler_log        Int
+    litre                 Float
+    note                  String?
+    created_at            DateTime @default(now())
+}
