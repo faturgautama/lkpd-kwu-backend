@@ -26,7 +26,7 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('swagger', app, document, {
         swaggerOptions: {
-            persistAuthorization: false,  // untuk keperluan development (agar token tidak hilang saat refresh)
+            persistAuthorization: true,  // untuk keperluan development (agar token tidak hilang saat refresh)
             docExpansion: "none"
         },
     });

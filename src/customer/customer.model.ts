@@ -19,6 +19,13 @@ export namespace CustomerModel {
         is_active: boolean
     }
 
+    export class ICustomerQueryParams {
+        full_name?: string
+        device_id?: string;
+        email?: string;
+        is_active?: boolean;
+    }
+
     export class GetAllCustomer {
         status: boolean;
         message: string;

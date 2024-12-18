@@ -8,6 +8,12 @@ import { AuthenticationController } from './authentication/authentication.contro
 import { jwtConstants } from './authentication/jwt.secret';
 import { AuthenticationService } from './authentication/authentication.service';
 import { JwtStrategy } from './authentication/jwt.strategy';
+import { TumblerLogController } from './tumbler-log/tumbler-log.controller';
+import { TumblerLogService } from './tumbler-log/tumbler-log.service';
+import { UtilityService } from './utility/utility.service';
+import { AppGateway } from './app.gateway';
+import { NotificationController } from './notification/notification.controller';
+import { NotificationService } from './notification/notification.service';
 
 @Module({
     imports: [
@@ -19,12 +25,18 @@ import { JwtStrategy } from './authentication/jwt.strategy';
     controllers: [
         AuthenticationController,
         CustomerController,
+        TumblerLogController,
+        NotificationController,
     ],
     providers: [
         CustomerService,
         PrismaService,
         AuthenticationService,
         JwtStrategy,
+        UtilityService,
+        TumblerLogService,
+        NotificationService,
+        AppGateway,
     ],
 })
 export class AppModule { }

@@ -4,7 +4,7 @@ import { AuthenticationModel } from './authentication.model';
 import { AuthenticationService } from './authentication.service';
 import { Response } from 'express';
 
-@Controller('v1/authentication')
+@Controller('api/v1/authentication')
 @ApiTags('Authentication')
 export class AuthenticationController {
 
