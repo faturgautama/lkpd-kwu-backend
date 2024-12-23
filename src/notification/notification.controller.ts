@@ -13,7 +13,32 @@ export class NotificationController {
         private _notificationService: NotificationService,
     ) { }
 
-    @Get('GetCount')
+    @Get('test-notif')
+    @UseGuards(JwtGuard)
+    @ApiBearerAuth('token')
+    @ApiResponse({ status: 200, description: 'Success', type: NotificationModel.GetNotification })
+    async testNotif(@Req() req: Request, @Res() res: Response): Promise<any> {
+        try {
+            const data = await this._notificationService.testNotif(req);
+
+            let result = {
+                status: data[0],
+                message: '',
+                data: data[1],
+            };
+
+            return res.status(HttpStatus.OK).json(result);
+
+        } catch (error) {
+            return res.status(HttpStatus.BAD_REQUEST).json({
+                status: false,
+                message: error.message,
+                data: null
+            })
+        }
+    }
+
+    @Get('count')
     @UseGuards(JwtGuard)
     @ApiBearerAuth('token')
     @ApiResponse({ status: 200, description: 'Success', type: NotificationModel.GetNotification })
@@ -38,7 +63,7 @@ export class NotificationController {
         }
     }
 
-    @Get('GetAll')
+    @Get()
     @UseGuards(JwtGuard)
     @ApiBearerAuth('token')
     @ApiResponse({ status: 200, description: 'Success', type: NotificationModel.GetNotification })
@@ -63,7 +88,7 @@ export class NotificationController {
         }
     }
 
-    @Post('Create')
+    @Post()
     @UseGuards(JwtGuard)
     @ApiBearerAuth('token')
     @ApiResponse({ status: 200, description: 'Success', type: NotificationModel.GetNotification })
@@ -88,7 +113,7 @@ export class NotificationController {
         }
     }
 
-    @Put('Update')
+    @Put('update')
     @UseGuards(JwtGuard)
     @ApiBearerAuth('token')
     @ApiResponse({ status: 200, description: 'Success', type: NotificationModel.GetNotification })
@@ -113,7 +138,7 @@ export class NotificationController {
         }
     }
 
-    @Put('Delete/:id')
+    @Put('delete/:id')
     @UseGuards(JwtGuard)
     @ApiBearerAuth('token')
     @ApiResponse({ status: 200, description: 'Success', type: NotificationModel.GetNotification })

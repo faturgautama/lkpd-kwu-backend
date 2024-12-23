@@ -13,11 +13,11 @@ export class TumblerLogController {
         private _tumblerLogService: TumblerLogService,
     ) { }
 
-    @Get()
-    @UseGuards(JwtGuard)
-    @ApiBearerAuth('token')
+    @Get('get-all')
     @ApiResponse({ status: 200, description: 'Success', type: TumblerLogModel.GetAllTumblerLog })
     async getAll(@Query() query: TumblerLogModel.TumblerLogQueryParams, @Res() res: Response): Promise<any> {
+        console.log("api get all hitted");
+
         try {
             const data = await this._tumblerLogService.getAll(query);
             return res.status(HttpStatus.OK).json(data);
@@ -32,11 +32,11 @@ export class TumblerLogController {
         }
     }
 
-    @Get(':id_tumbler_log')
-    @UseGuards(JwtGuard)
-    @ApiBearerAuth('token')
+    @Get('detail/:id_tumbler_log')
     @ApiResponse({ status: 200, description: 'Success', type: TumblerLogModel.GetByIdTumblerLog })
     async getById(@Param('id_tumbler_log') id_tumbler_log: string, @Res() res: Response): Promise<any> {
+        console.log("api get by id hitted");
+
         try {
             const data = await this._tumblerLogService.getById(id_tumbler_log);
             return res.status(HttpStatus.OK).json(data);
@@ -52,15 +52,16 @@ export class TumblerLogController {
     }
 
     @Post('initial-fill')
-    @UseGuards(JwtGuard)
-    @ApiBearerAuth('token')
     @ApiResponse({ status: 200, description: 'Success', type: TumblerLogModel.GetByIdTumblerLog })
-    async create(@Body() body: TumblerLogModel.CreateTumblerLog, @Req() req: Request, @Res() res: Response): Promise<any> {
+    async create(@Query() query: TumblerLogModel.CreateTumblerLog, @Res() res: Response): Promise<any> {
+        console.log("api initial fill hitted");
+
         try {
-            const data = await this._tumblerLogService.create(body, req);
+            const data = await this._tumblerLogService.create(query);
             return res.status(HttpStatus.OK).json(data);
 
         } catch (error) {
+            console.log(error);
             const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
             return res.status(status).json({
                 status: false,
@@ -71,12 +72,12 @@ export class TumblerLogController {
     }
 
     @Post('new-fill')
-    @UseGuards(JwtGuard)
-    @ApiBearerAuth('token')
     @ApiResponse({ status: 200, description: 'Success', type: TumblerLogModel.GetByIdTumblerLog })
-    async newFill(@Body() body: TumblerLogModel.CreateTumblerFillLog, @Req() req: Request, @Res() res: Response): Promise<any> {
+    async newFill(@Query() query: TumblerLogModel.CreateTumblerFillLog, @Res() res: Response): Promise<any> {
+        console.log("api new fill hitted");
+
         try {
-            const data = await this._tumblerLogService.createFill(body, req);
+            const data = await this._tumblerLogService.createFill(query);
             return res.status(HttpStatus.OK).json(data);
 
         } catch (error) {
@@ -90,12 +91,12 @@ export class TumblerLogController {
     }
 
     @Post('consume')
-    @UseGuards(JwtGuard)
-    @ApiBearerAuth('token')
     @ApiResponse({ status: 200, description: 'Success', type: TumblerLogModel.GetByIdTumblerLog })
-    async consume(@Body() body: TumblerLogModel.CreateTumblerConsumeLog, @Req() req: Request, @Res() res: Response): Promise<any> {
+    async consume(@Query() query: TumblerLogModel.CreateTumblerConsumeLog, @Res() res: Response): Promise<any> {
+        console.log("api consume hitted");
+
         try {
-            const data = await this._tumblerLogService.createConsume(body, req);
+            const data = await this._tumblerLogService.createConsume(query);
             return res.status(HttpStatus.OK).json(data);
 
         } catch (error) {

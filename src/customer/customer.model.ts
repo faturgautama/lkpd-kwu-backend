@@ -68,4 +68,24 @@ export namespace CustomerModel {
         updated_by: number
         is_active: boolean
     }
+
+    export class IWeeklyAndTodayConsume {
+        date_time: Date;
+        litre: number;
+    }
+
+    export class IReportCustomer {
+        total_fill: number;
+        total_fill_today: number;
+        total_consume: number;
+        total_consume_today: number;
+        weekly_consume: IWeeklyAndTodayConsume[];
+        today_consume: IWeeklyAndTodayConsume[];
+    }
+
+    export class GetReportCustomer {
+        status: boolean;
+        message: string;
+        data: IReportCustomer;
+    }
 }

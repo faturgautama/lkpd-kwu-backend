@@ -50,19 +50,19 @@ export namespace TumblerLogModel {
     }
 
     export class CreateTumblerLog {
-        id_customer: number
-        initial_fill: {
-            litre: number
-            note: string
-        }
+        device_id: string
+        litre: number
+        note: string
     }
 
     export class CreateTumblerFillLog {
+        device_id: string
         litre: number
         note: string
     }
 
     export class CreateTumblerConsumeLog {
+        device_id: string
         litre: number
         note: string
     }

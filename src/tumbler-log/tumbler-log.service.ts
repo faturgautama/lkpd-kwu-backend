@@ -111,9 +111,9 @@ export class TumblerLogService {
 
                 data.push({
                     ...item,
-                    initial_fill_litre: tumblerFill[0].litre || 0,
-                    total_fill_litre: tumblerFill.reduce((acc, curr) => acc + curr.litre, 0) || 0,
-                    total_consume_litre: tumblerConsume.reduce((acc, curr) => acc + curr.litre, 0) || 0
+                    initial_fill_litre: tumblerFill.length ? tumblerFill[0].litre : 0,
+                    total_fill_litre: Number(tumblerFill.reduce((acc, curr) => acc + curr.litre, 0)).toFixed(2) || 0,
+                    total_consume_litre: Number(tumblerConsume.reduce((acc, curr) => acc + curr.litre, 0)).toFixed(2) || 0
                 });
             }
 
@@ -183,8 +183,8 @@ export class TumblerLogService {
             data = {
                 ...res[0],
                 initial_fill_litre: tumblerFill[0].litre || 0,
-                total_fill_litre: tumblerFill.reduce((acc, curr) => acc + curr.litre, 0) || 0,
-                total_consume_litre: tumblerConsume.reduce((acc, curr) => acc + curr.litre, 0) || 0,
+                total_fill_litre: Number(tumblerFill.reduce((acc, curr) => acc + curr.litre, 0)).toFixed(2) || 0,
+                total_consume_litre: Number(tumblerConsume.reduce((acc, curr) => acc + curr.litre, 0)).toFixed(2) || 0,
                 fill: tumblerFill,
                 consume: tumblerConsume,
             };
@@ -206,60 +206,112 @@ export class TumblerLogService {
         }
     }
 
-    async create(payload: TumblerLogModel.CreateTumblerLog, req: Request): Promise<any> {
+    async create(payload: TumblerLogModel.CreateTumblerLog): Promise<any> {
         try {
-            const { initial_fill, ...pays } = payload;
-
-            const resHeader: any = await this.prisma.tumblerLog.create({
-                data: {
-                    ...pays,
-                    date_time: new Date(),
-                }
-            });
-
-            if (!resHeader) {
-                return {
-                    status: false,
-                    message: "Tumbler Log Gagal Disimpan",
-                    data: null
-                }
-            };
-
-            const resDetail: any = await this.prisma.tumblerFillLog.create({
-                data: {
-                    ...initial_fill,
-                    id_tumbler_log: resHeader.id_tumbler_log,
-                    created_at: new Date(),
-                }
-            });
-
-            if (!resDetail) {
-                return {
-                    status: false,
-                    message: "Tumbler Initial Fill Gagal Disimpan",
-                    data: null
-                }
-            };
-
-            const device_name = await this.prisma.customer.findFirst({
+            const customer: any = await this.prisma.customer.findUnique({
                 where: {
-                    id_customer: parseInt(req.user['id_customer'] as string)
-                },
-                select: {
-                    device_name: true
+                    device_id: payload.device_id
                 }
             });
 
-            await this.notificationService.create(req, {
-                title: 'Aktifitas Baru',
-                description: `Aktifitas baru pada ${device_name.device_name}`,
-                url: `dashboard/log`
+            const req = {
+                user: {
+                    id_customer: customer.id_customer
+                }
+            };
+
+
+            if (!customer) {
+                return {
+                    status: false,
+                    message: "Device ID Tidak Terdaftar",
+                    data: null
+                }
+            };
+
+            const isTodayHasFill: any = await this.prisma.tumblerLog.findFirst({
+                where: {
+                    id_customer: customer.id_customer,
+                    date_time: {
+                        gte: new Date(new Date().setHours(0, 0, 0, 0)),
+                        lt: new Date(new Date().setHours(23, 59, 59, 999))
+                    }
+                }
             });
 
-            return {
-                status: true,
-                message: '',
-                data: resHeader
+            if (isTodayHasFill) {
+                const onlyInsertDetail: any = await this.prisma.tumblerFillLog.create({
+                    data: {
+                        id_tumbler_log: isTodayHasFill.id_tumbler_log,
+                        litre: parseFloat(payload.litre as any),
+                        note: payload.note ? payload.note : 'Isi Ulang Pertama',
+                        created_at: new Date(),
+                    }
+                });
+
+                if (!onlyInsertDetail) {
+                    return {
+                        status: false,
+                        message: "Tumbler Initial Fill Gagal Disimpan",
+                        data: null
+                    }
+                };
+
+                await this.notificationService.create(req, {
+                    title: 'Aktifitas Baru',
+                    description: `Aktifitas Baru Device ${customer.device_name}`,
+                    url: `dashboard/log`
+                });
+
+                return {
+                    status: true,
+                    message: '',
+                    data: isTodayHasFill
+                }
+            } else {
+                const resHeader: any = await this.prisma.tumblerLog.create({
+                    data: {
+                        id_customer: customer.id_customer,
+                        date_time: new Date(),
+                    }
+                });
+
+                if (!resHeader) {
+                    return {
+                        status: false,
+                        message: "Tumbler Log Gagal Disimpan",
+                        data: null
+                    }
+                };
+
+                const resDetail: any = await this.prisma.tumblerFillLog.create({
+                    data: {
+                        id_tumbler_log: resHeader.id_tumbler_log,
+                        litre: parseFloat(payload.litre as any),
+                        note: payload.note ? payload.note : 'Isi Ulang Pertama',
+                        created_at: new Date(),
+                    }
+                });
+
+                if (!resDetail) {
+                    return {
+                        status: false,
+                        message: "Tumbler Initial Fill Gagal Disimpan",
+                        data: null
+                    }
+                };
+
+                await this.notificationService.create(req, {
+                    title: 'Aktifitas Baru',
+                    description: `Aktifitas Baru Device ${customer.device_name}`,
+                    url: `dashboard/log`
+                });
+
+                return {
+                    status: true,
+                    message: '',
+                    data: resHeader
+                }
             }
 
         } catch (error) {
@@ -274,11 +326,25 @@ export class TumblerLogService {
         }
     }
 
-    async createFill(payload: TumblerLogModel.CreateTumblerFillLog, req: Request): Promise<any> {
+    async createFill(payload: TumblerLogModel.CreateTumblerFillLog): Promise<any> {
         try {
+            const customer: any = await this.prisma.customer.findUnique({
+                where: {
+                    device_id: payload.device_id
+                }
+            });
+
+            if (!customer) {
+                return {
+                    status: false,
+                    message: "Device ID Tidak Terdaftar",
+                    data: null
+                }
+            }
+
             const todayLog = await this.prisma.tumblerLog.findFirst({
                 where: {
-                    id_customer: parseInt(req.user['id_customer'] as string),
+                    id_customer: customer.id_customer,
                     date_time: {
                         gte: new Date(new Date().setHours(0, 0, 0, 0)),
                         lt: new Date(new Date().setHours(23, 59, 59, 999))
@@ -296,8 +362,9 @@ export class TumblerLogService {
 
             const res: any = await this.prisma.tumblerFillLog.create({
                 data: {
-                    ...payload,
                     id_tumbler_log: todayLog.id_tumbler_log,
+                    litre: parseFloat(payload.litre as any),
+                    note: payload.note ? payload.note : "Isi Ulang",
                     created_at: new Date(),
                 }
             });
@@ -309,6 +376,18 @@ export class TumblerLogService {
                     data: null
                 }
             };
+
+            const req = {
+                user: {
+                    id_customer: customer.id_customer
+                }
+            };
+
+            await this.notificationService.create(req, {
+                title: 'Aktifitas Baru',
+                description: `Refill Device ${customer.device_name}`,
+                url: `dashboard/log`
+            });
 
             return {
                 status: true,
@@ -327,13 +406,25 @@ export class TumblerLogService {
         }
     }
 
-    async createConsume(payload: TumblerLogModel.CreateTumblerConsumeLog, req: Request): Promise<any> {
+    async createConsume(payload: TumblerLogModel.CreateTumblerConsumeLog): Promise<any> {
         try {
-            console.log("user =>", req.user);
+            const customer: any = await this.prisma.customer.findUnique({
+                where: {
+                    device_id: payload.device_id
+                }
+            });
+
+            if (!customer) {
+                return {
+                    status: false,
+                    message: "Device ID Tidak Terdaftar",
+                    data: null
+                }
+            }
 
             const todayLog = await this.prisma.tumblerLog.findFirst({
                 where: {
-                    id_customer: parseInt(req.user['id_customer'] as string),
+                    id_customer: customer.id_customer,
                     date_time: {
                         gte: new Date(new Date().setHours(0, 0, 0, 0)),
                         lt: new Date(new Date().setHours(23, 59, 59, 999))
@@ -351,8 +442,9 @@ export class TumblerLogService {
 
             const res: any = await this.prisma.tumblerConsumeLog.create({
                 data: {
-                    ...payload,
                     id_tumbler_log: todayLog.id_tumbler_log,
+                    litre: parseFloat(payload.litre as any),
+                    note: payload.note ? payload.note : "Konsumsi",
                     created_at: new Date(),
                 }
             });
@@ -364,6 +456,19 @@ export class TumblerLogService {
                     data: null
                 }
             };
+
+            const req = {
+                user: {
+                    id_customer: customer.id_customer
+                }
+            };
+
+            await this.notificationService.create(req, {
+                title: 'Aktifitas Baru',
+                description: `Konsumsi Device ${customer.device_name}`,
+                url: `dashboard/log`
+            });
+
 
             return {
                 status: true,

@@ -12,6 +12,15 @@ export class NotificationService {
         private readonly appGateway: AppGateway,
     ) { }
 
+    async testNotif(req: Request): Promise<[boolean, any]> {
+        try {
+            this.appGateway.handleSendNotif([parseInt(req.user['id_customer'] as any)])
+            return [true, "OK"];
+        } catch (error) {
+            throw error;
+        }
+    }
+
     async getCount(req: Request): Promise<[boolean, any]> {
         try {
             const res = await this.prisma.notification.count({
@@ -54,7 +63,7 @@ export class NotificationService {
         }
     }
 
-    async create(req: Request, data: NotificationModel.CreateNotification): Promise<[boolean, any]> {
+    async create(req: any, data: NotificationModel.CreateNotification): Promise<[boolean, any]> {
         try {
             if (req.user['id_customer']) {
                 const res = await this.prisma.notification.create({

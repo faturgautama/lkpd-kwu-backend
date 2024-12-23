@@ -88,4 +88,23 @@ export class CustomerController {
             });
         }
     }
+
+    @Get('report/:id_customer/:date')
+    @UseGuards(JwtGuard)
+    @ApiBearerAuth('token')
+    @ApiResponse({ status: 200, description: 'Success', type: CustomerModel.GetReportCustomer })
+    async getReport(@Param('id_customer') id_customer: number, @Param('date') date: string, @Res() res: Response): Promise<any> {
+        try {
+            const data = await this._customerService.getReport(id_customer, date);
+            return res.status(HttpStatus.OK).json(data);
+
+        } catch (error) {
+            const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+            return res.status(status).json({
+                status: false,
+                message: error.message,
+                data: null,
+            });
+        }
+    }
 }
