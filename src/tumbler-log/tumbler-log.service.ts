@@ -210,7 +210,7 @@ export class TumblerLogService {
         try {
             const customer: any = await this.prisma.customer.findUnique({
                 where: {
-                    device_id: payload.device_id
+                    device_id: payload.device_id ? payload.device_id : 'Bentala'
                 }
             });
 
@@ -330,7 +330,7 @@ export class TumblerLogService {
         try {
             const customer: any = await this.prisma.customer.findUnique({
                 where: {
-                    device_id: payload.device_id
+                    device_id: payload.device_id ? payload.device_id : 'Bentala'
                 }
             });
 
@@ -410,7 +410,7 @@ export class TumblerLogService {
         try {
             const customer: any = await this.prisma.customer.findUnique({
                 where: {
-                    device_id: payload.device_id
+                    device_id: payload.device_id ? payload.device_id : 'Bentala'
                 }
             });
 

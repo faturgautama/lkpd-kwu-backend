@@ -79,6 +79,7 @@ export namespace CustomerModel {
         total_fill_today: number;
         total_consume: number;
         total_consume_today: number;
+        total_consume_today_persen: number;
         weekly_consume: IWeeklyAndTodayConsume[];
         today_consume: IWeeklyAndTodayConsume[];
     }

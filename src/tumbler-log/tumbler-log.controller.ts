@@ -51,7 +51,7 @@ export class TumblerLogController {
         }
     }
 
-    @Post('initial-fill')
+    @Get('fill/initial')
     @ApiResponse({ status: 200, description: 'Success', type: TumblerLogModel.GetByIdTumblerLog })
     async create(@Query() query: TumblerLogModel.CreateTumblerLog, @Res() res: Response): Promise<any> {
         console.log("api initial fill hitted");
@@ -61,7 +61,6 @@ export class TumblerLogController {
             return res.status(HttpStatus.OK).json(data);
 
         } catch (error) {
-            console.log(error);
             const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
             return res.status(status).json({
                 status: false,
@@ -71,7 +70,7 @@ export class TumblerLogController {
         }
     }
 
-    @Post('new-fill')
+    @Get('fill/new')
     @ApiResponse({ status: 200, description: 'Success', type: TumblerLogModel.GetByIdTumblerLog })
     async newFill(@Query() query: TumblerLogModel.CreateTumblerFillLog, @Res() res: Response): Promise<any> {
         console.log("api new fill hitted");
@@ -90,7 +89,7 @@ export class TumblerLogController {
         }
     }
 
-    @Post('consume')
+    @Get('consume/new')
     @ApiResponse({ status: 200, description: 'Success', type: TumblerLogModel.GetByIdTumblerLog })
     async consume(@Query() query: TumblerLogModel.CreateTumblerConsumeLog, @Res() res: Response): Promise<any> {
         console.log("api consume hitted");

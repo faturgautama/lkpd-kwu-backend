@@ -202,9 +202,16 @@ export class CustomerService {
                 total_fill_today: 0,
                 total_consume: 0,
                 total_consume_today: 0,
+                total_consume_today_persen: 0,
                 weekly_consume: [],
                 today_consume: []
             };
+
+            const customer = await this.prisma.customer.findUnique({
+                where: {
+                    id_customer: parseInt(id_customer as any)
+                }
+            });
 
             // ** Search total fill
             const totalFillQuery: any[] = await this.prisma
@@ -244,9 +251,9 @@ export class CustomerService {
                       tbl.id_customer = ${parseInt(id_customer as any)}
               `;
 
-            res.total_consume = totalConsumeQuery.length ? this.formatingTwoLeadingZero(totalConsumeQuery[0].total_consume) : 0
+            res.total_consume = totalConsumeQuery.length ? this.formatingTwoLeadingZero(totalConsumeQuery[0].total_consume) : 0;
 
-            // ** Search total fill today
+            // ** Search total consume today
             const totalConsumeTodayQuery: any[] = await this.prisma
                 .$queryRaw`
                  SELECT
@@ -262,6 +269,12 @@ export class CustomerService {
 
             const currentDate = new Date(date);
             const firstDateSearch = new Date(currentDate.setDate(currentDate.getDate() - 7)).toISOString().split('T')[0];
+
+            // ** Search total consume today in percentage
+            const neededConsumeMililiter = (customer.weight * 32.5);
+            const neededConsumeLiter = this.formatingTwoLeadingZero((neededConsumeMililiter / 1000).toFixed(2));
+
+            res.total_consume_today_persen = this.formatingTwoLeadingZero(((res.total_consume_today / neededConsumeLiter) * 100).toFixed(2));
 
             // ** Search weekly consume
             const weeklyConsumeQuery: any[] = await this.prisma

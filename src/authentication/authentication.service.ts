@@ -1,7 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma.service';
-import * as bcrypt from 'bcrypt';
 import { AuthenticationModel } from './authentication.model';
 
 @Injectable()
@@ -98,7 +97,7 @@ export class AuthenticationService {
                 }
             }
 
-            const match = await bcrypt.compare(password, user.password);
+            const match = password === user.password;
 
             console.log("is password match =>", match);
 
@@ -160,13 +159,11 @@ export class AuthenticationService {
                 }
             }
 
-            const salt = await bcrypt.genSalt();
-
             const createUser = await this._prismaService.user.create({
                 data: {
                     full_name: payload.full_name,
                     email: payload.email,
-                    password: await bcrypt.hash(payload.password, salt),
+                    password: payload.password,
                     created_at: new Date(),
                     is_active: true,
                     created_by: 0,

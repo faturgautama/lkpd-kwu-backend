@@ -76,3 +76,20 @@ model Notification {
     is_read         Boolean  @default(false)
     created_at      DateTime @default(now())
 }
+
+model SamUnit {
+    id                Int    @id @default(autoincrement())
+    harga             Float
+    unit              String
+    jenis             String
+    merk              String
+    ukuran            String
+    short_description String
+    description       String
+}
+
+model SamImage {
+    id        Int    @id @default(autoincrement())
+    id_unit   Int
+    path_foto String
+}

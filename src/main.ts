@@ -26,12 +26,12 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('swagger', app, document, {
         swaggerOptions: {
-            persistAuthorization: true,  // untuk keperluan development (agar token tidak hilang saat refresh)
+            persistAuthorization: false,
             docExpansion: "none"
         },
     });
 
     app.enableCors();
-    await app.listen(process.env.PORT ?? 3055);
+    await app.listen(process.env.PORT || 3055);
 }
 bootstrap();

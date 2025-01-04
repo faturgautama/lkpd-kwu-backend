@@ -14,6 +14,8 @@ import { UtilityService } from './utility/utility.service';
 import { AppGateway } from './app.gateway';
 import { NotificationController } from './notification/notification.controller';
 import { NotificationService } from './notification/notification.service';
+import { SamController } from './sam/sam.controller';
+import { SamService } from './sam/sam.service';
 
 @Module({
     imports: [
@@ -27,6 +29,7 @@ import { NotificationService } from './notification/notification.service';
         CustomerController,
         TumblerLogController,
         NotificationController,
+        SamController,
     ],
     providers: [
         CustomerService,
@@ -36,6 +39,7 @@ import { NotificationService } from './notification/notification.service';
         UtilityService,
         TumblerLogService,
         NotificationService,
+        SamService,
         AppGateway,
     ],
 })
