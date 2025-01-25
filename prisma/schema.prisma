@@ -13,83 +13,181 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Customer {
-    id_customer   Int       @id @default(autoincrement())
-    device_id     String    @unique
-    device_name   String?
-    device_type   String?
-    device_size   String?
-    device_notes  String?
-    full_name     String
-    date_of_birth DateTime?
-    weight        Float
-    height        Float
-    email         String?   @unique
-    password      String
-    created_at    DateTime  @default(now())
-    created_by    Int
-    updated_at    DateTime?
-    updated_by    Int?
-    is_active     Boolean   @default(true)
+model sekolah {
+    id_sekolah   Int      @id @default(autoincrement())
+    nama_sekolah String
+    alamat       String?
+    no_telepon   String?
+    kode_pos     String?
+    is_active    Boolean  @default(true)
+    create_at    DateTime @default(now())
+    kelas        kelas[]
+    guru         guru[]
 }
 
-model User {
-    id_user    Int       @id @default(autoincrement())
-    full_name  String
-    email      String?   @unique
-    password   String
-    created_at DateTime  @default(now())
-    created_by Int
-    updated_at DateTime?
-    updated_by Int?
-    is_active  Boolean   @default(true)
+model kelas {
+    id_kelas   Int      @id @default(autoincrement())
+    kelas      String
+    sekolah    sekolah  @relation(fields: [id_sekolah], references: [id_sekolah], onDelete: Restrict)
+    id_sekolah Int
+    is_active  Boolean  @default(true)
+    create_at  DateTime @default(now())
+    siswa      siswa[]
+    materi     materi[]
+    proyek     proyek[]
+    kuis       kuis[]
 }
 
-model TumblerLog {
-    id_tumbler_log Int      @id @default(autoincrement())
-    id_customer    Int
-    date_time      DateTime @default(now())
+model guru {
+    id_guru      Int      @id @default(autoincrement())
+    nama_lengkap String
+    nip          String?
+    sekolah      sekolah  @relation(fields: [id_sekolah], references: [id_sekolah], onDelete: Restrict)
+    id_sekolah   Int
+    is_active    Boolean  @default(true)
+    create_at    DateTime @default(now())
 }
 
-model TumblerFillLog {
-    id_tumbler_fill_log Int      @id @default(autoincrement())
-    id_tumbler_log      Int
-    litre               Float
-    note                String?
-    created_at          DateTime @default(now())
+model siswa {
+    id_siswa              Int                     @id @default(autoincrement())
+    nama_lengkap          String
+    no_absen              String
+    kelas                 kelas                   @relation(fields: [id_kelas], references: [id_kelas], onDelete: Restrict)
+    id_kelas              Int
+    is_active             Boolean                 @default(true)
+    create_at             DateTime                @default(now())
+    siswa_kelompok_proyek siswa_kelompok_proyek[]
+    user                  user?
+    jawaban_kuis          jawaban_kuis[]
+    nilai_kuis            nilai_kuis[]
 }
 
-model TumblerConsumeLog {
-    id_tumbler_log_detail Int      @id @default(autoincrement())
-    id_tumbler_log        Int
-    litre                 Float
-    note                  String?
-    created_at            DateTime @default(now())
+model user {
+    id_user               Int                     @id @default(autoincrement())
+    id_guru               Int?
+    siswa                 siswa?                  @relation(fields: [id_siswa], references: [id_siswa])
+    id_siswa              Int?                    @unique
+    email                 String
+    password              String
+    register_at           DateTime                @default(now())
+    is_active             Boolean                 @default(true)
+    siswa_kelompok_proyek siswa_kelompok_proyek[]
 }
 
-model Notification {
-    id_notification Int      @id @default(autoincrement())
-    id_customer     Int
-    title           String
-    url             String
-    description     String
-    is_read         Boolean  @default(false)
-    created_at      DateTime @default(now())
+model materi {
+    id_materi    Int       @id @default(autoincrement())
+    kelas        kelas     @relation(fields: [id_kelas], references: [id_kelas], onDelete: Restrict)
+    id_kelas     Int
+    judul        String
+    file_name    String
+    file_base_64 String
+    create_at    DateTime  @default(now())
+    create_by    Int
+    update_at    DateTime?
+    update_by    Int?
 }
 
-model SamUnit {
-    id                Int    @id @default(autoincrement())
-    harga             Float
-    unit              String
-    jenis             String
-    merk              String
-    ukuran            String
-    short_description String
-    description       String
+model proyek {
+    id_proyek       Int               @id @default(autoincrement())
+    judul           String
+    deskripsi       String?
+    kelas           kelas             @relation(fields: [id_kelas], references: [id_kelas], onDelete: Restrict)
+    id_kelas        Int
+    create_at       DateTime          @default(now())
+    create_by       Int
+    is_active       Boolean           @default(true)
+    kelompok_proyek kelompok_proyek[]
 }
 
-model SamImage {
-    id        Int    @id @default(autoincrement())
-    id_unit   Int
-    path_foto String
+model kelompok_proyek {
+    id_kelompok_proyek    Int                     @id @default(autoincrement())
+    kelompok_proyek       String
+    proyek                proyek                  @relation(fields: [id_proyek], references: [id_proyek], onDelete: Restrict)
+    id_proyek             Int
+    hasil                 String
+    nilai_pertemuan_1     Float?
+    nilai_pertemuan_2     Float?
+    nilai_pertemuan_3     Float?
+    nilai_pertemuan_4     Float?
+    create_at             DateTime                @default(now())
+    create_by             Int
+    update_at             DateTime?
+    update_by             Int?
+    is_active             Boolean                 @default(true)
+    siswa_kelompok_proyek siswa_kelompok_proyek[]
+}
+
+model siswa_kelompok_proyek {
+    id_siswa_kelompok_proyek Int             @id @default(autoincrement())
+    kelompok_proyek          kelompok_proyek @relation(fields: [id_kelompok_proyek], references: [id_kelompok_proyek], onDelete: Restrict)
+    id_kelompok_proyek       Int
+    user                     user            @relation(fields: [id_user], references: [id_user], onDelete: Restrict)
+    id_user                  Int
+    siswa                    siswa           @relation(fields: [id_siswa], references: [id_siswa], onDelete: Restrict)
+    id_siswa                 Int
+}
+
+model kuis {
+    id_kuis         Int               @id @default(autoincrement())
+    kelas           kelas             @relation(fields: [id_kelas], references: [id_kelas], onDelete: Restrict)
+    id_kelas        Int
+    judul           String
+    kategori_kuis   String
+    deskripsi       String?
+    start_date      DateTime?
+    end_date        DateTime?
+    create_at       DateTime          @default(now())
+    create_by       Int
+    update_at       DateTime?
+    update_by       Int?
+    is_active       Boolean           @default(true)
+    pertanyaan_kuis pertanyaan_kuis[]
+    nilai_kuis      nilai_kuis[]
+}
+
+model pertanyaan_kuis {
+    id_pertanyaan Int            @id @default(autoincrement())
+    kuis          kuis           @relation(fields: [id_kuis], references: [id_kuis], onDelete: Restrict)
+    id_kuis       Int
+    pertanyaan    String
+    option_a      String
+    option_b      String
+    option_c      String
+    option_d      String
+    option_e      String
+    correct       String
+    create_at     DateTime       @default(now())
+    create_by     Int
+    jawaban_kuis  jawaban_kuis[]
+}
+
+model jawaban_kuis {
+    id_jawaban    Int             @id @default(autoincrement())
+    pertanyaan    pertanyaan_kuis @relation(fields: [id_pertanyaan], references: [id_pertanyaan], onDelete: Restrict)
+    id_pertanyaan Int
+    siswa         siswa           @relation(fields: [id_siswa], references: [id_siswa], onDelete: Restrict)
+    id_siswa      Int
+    jawaban       String
+    is_correct    Boolean
+    submit_at     DateTime        @default(now())
+}
+
+model nilai_kuis {
+    id_nilai_kuis Int      @id @default(autoincrement())
+    kuis          kuis     @relation(fields: [id_kuis], references: [id_kuis], onDelete: Restrict)
+    id_kuis       Int
+    siswa         siswa    @relation(fields: [id_siswa], references: [id_siswa], onDelete: Restrict)
+    id_siswa      Int
+    nilai         Decimal
+    create_at     DateTime @default(now())
+    create_by     Int
+}
+
+model referensi {
+    id_referensi Int      @id @default(autoincrement())
+    judul        String
+    deskripsi    String?
+    link         String
+    create_at    DateTime @default(now())
+    create_by    Int
 }

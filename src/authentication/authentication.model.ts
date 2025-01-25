@@ -1,50 +1,57 @@
 export namespace AuthenticationModel {
-    export class ILoginCustomer {
-        device_id: string;
-        password: string;
-    }
-
-    export class ILoginCustomerResponse {
-        id_customer: number;
-        device_id: string;
-        device_name: string;
-        device_type: string;
-        device_size: string;
-        device_notes: string;
-        full_name: string;
-        date_of_birth: Date;
-        weight: number;
-        height: number;
-        email: string;
-        token: string;
-    }
-
-    export class LoginCustomer {
-        status: boolean;
-        message: string;
-        data: ILoginCustomerResponse;
-    }
-
-    export class ILoginUser {
+    export class ILogin {
         email: string;
         password: string;
     }
 
-    export class ILoginUserResponse {
+    export class ILoginResponse {
         id_user: number;
-        full_name: string;
+        is_guru: boolean;
+        nama_lengkap: string;
+        id_sekolah: number;
+        nama_sekolah: string;
+        id_kelas?: number;
+        nama_kelas?: string;
+        nip?: string;
+        no_absen?: string;
         email: string;
         token: string;
     }
 
-    export class LoginUser {
+    export class Login {
         status: boolean;
         message: string;
-        data: ILoginUserResponse;
+        data: ILoginResponse;
     }
 
-    export class IRegisterUser {
-        full_name: string;
+    export class IRegister {
+        nama_lengkap: string;
+        email: string;
+        password: string;
+        is_guru: boolean;
+    }
+
+    export class IProfile {
+        id_user?: number;
+        id_siswa?: number;
+        id_guru?: number;
+        nama_lengkap: string;
+        no_absen?: string;
+        nip?: string;
+        email: string;
+        password: string;
+    }
+
+    export class GetProfile {
+        status: boolean;
+        message: string;
+        data: IProfile;
+    }
+
+    export class UpdateProfile {
+        nama_lengkap: string;
+        no_absen?: string;
+        nip?: string;
         email: string;
         password: string;
     }

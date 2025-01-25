@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma.service';
 import { AuthenticationModel } from './authentication.model';
+import { Request } from 'express';
 
 @Injectable()
 export class AuthenticationService {
@@ -11,83 +12,13 @@ export class AuthenticationService {
         private _prismaService: PrismaService,
     ) { }
 
-    async loginCustomer(device_id: string, password: string): Promise<AuthenticationModel.LoginCustomer> {
-        try {
-            const customer = await this._prismaService.customer.findFirst({
-                where: {
-                    device_id: device_id,
-                }
-            });
-
-            console.log("customer =>", customer);
-
-            if (!customer) {
-                return {
-                    status: false,
-                    message: "User Tidak Ditemukan",
-                    data: null,
-                }
-            }
-
-            const match = password == customer.password
-
-            console.log("is password match =>", match);
-
-            if (!match) {
-                return {
-                    status: false,
-                    message: "Mohon Periksa Device Id / Password Anda",
-                    data: null as any,
-                }
-            }
-
-            const token = this._jwtService.sign({
-                id_customer: customer.id_customer,
-                id_user: null,
-                full_name: customer.full_name,
-                email: customer.email,
-                is_customer: true,
-            });
-
-            return {
-                status: true,
-                message: "OK",
-                data: {
-                    id_customer: customer.id_customer,
-                    device_id: customer.device_id,
-                    device_name: customer.device_name,
-                    device_type: customer.device_type,
-                    device_size: customer.device_size,
-                    device_notes: customer.device_notes,
-                    full_name: customer.full_name,
-                    date_of_birth: new Date(customer.date_of_birth),
-                    weight: customer.weight,
-                    height: customer.height,
-                    email: customer.email,
-                    token: token,
-                }
-            }
-
-        } catch (error) {
-            throw new HttpException(
-                {
-                    status: HttpStatus.INTERNAL_SERVER_ERROR,
-                    message: error.message,
-                },
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-    }
-
-    async loginUser(email: string, password: string): Promise<AuthenticationModel.LoginUser> {
+    async login(email: string, password: string): Promise<AuthenticationModel.Login> {
         try {
             const user = await this._prismaService.user.findFirst({
                 where: {
                     email: email,
                 }
             });
-
-            console.log("user =>", user);
 
             if (!user) {
                 return {
@@ -97,9 +28,7 @@ export class AuthenticationService {
                 }
             }
 
-            const match = password === user.password;
-
-            console.log("is password match =>", match);
+            const match = password == user.password
 
             if (!match) {
                 return {
@@ -109,22 +38,66 @@ export class AuthenticationService {
                 }
             }
 
-            const token = this._jwtService.sign({
-                id_customer: null,
-                id_user: user.id_user,
-                full_name: user.full_name,
-                email: user.email,
-                is_customer: false,
-            });
+            let token: string = "", data: any = null;
+
+            if (user.id_guru && !user.id_siswa) {
+                const guru = await this._prismaService.guru.findUnique({
+                    where: {
+                        id_guru: user.id_guru
+                    },
+                    include: {
+                        sekolah: true,
+                    }
+                });
+
+                data = guru;
+
+                token = this._jwtService.sign({
+                    email: user.email,
+                    id_user: user.id_user,
+                    nama_lengkap: guru.nama_lengkap,
+                })
+            }
+
+            if (!user.id_guru && user.id_siswa) {
+                const siswa = await this._prismaService.siswa.findUnique({
+                    where: {
+                        id_siswa: user.id_siswa
+                    },
+                    include: {
+                        kelas: {
+                            include: {
+                                sekolah: true,
+                            }
+                        }
+                    }
+                });
+
+                data = siswa;
+
+                token = this._jwtService.sign({
+                    email: user.email,
+                    id_user: user.id_user,
+                    nama_lengkap: siswa.nama_lengkap,
+                })
+            }
+
+            if (!user.id_guru && !user.id_siswa) {
+                token = this._jwtService.sign({
+                    email: user.email,
+                    id_user: user.id_user,
+                    nama_lengkap: "SUPERADMIN",
+                })
+            }
 
             return {
                 status: true,
                 message: "OK",
                 data: {
                     id_user: user.id_user,
-                    full_name: user.full_name,
-                    email: user.email,
                     token: token,
+                    ...data,
+                    nama_lengkap: data ? data.nama_lengkap : 'SUPERADMIN'
                 }
             }
 
@@ -139,19 +112,37 @@ export class AuthenticationService {
         }
     }
 
-    async registerUser(payload: AuthenticationModel.IRegisterUser): Promise<{ result: boolean, message: string, data: any }> {
+    async register(payload: AuthenticationModel.IRegister): Promise<{ result: boolean, message: string, data: any }> {
         try {
-            console.log("register api hitted ....")
+            let data = null, isUserExist = null;
 
-            const employee = await this._prismaService.user.findFirst({
+            if (payload.is_guru) {
+                data = await this._prismaService.guru.findFirst({
+                    where: {
+                        nama_lengkap: {
+                            contains: payload.nama_lengkap
+                        }
+                    }
+                });
+            };
+
+            if (!payload.is_guru) {
+                data = await this._prismaService.siswa.findFirst({
+                    where: {
+                        nama_lengkap: {
+                            contains: payload.nama_lengkap
+                        }
+                    }
+                });
+            };
+
+            isUserExist = await this._prismaService.user.findFirst({
                 where: {
-                    email: payload.email,
+                    email: payload.email
                 }
             });
 
-            console.log("cari data employee di db =>", employee)
-
-            if (employee) {
+            if (isUserExist) {
                 return {
                     result: false,
                     message: "Email Sudah Terdaftar",
@@ -161,12 +152,12 @@ export class AuthenticationService {
 
             const createUser = await this._prismaService.user.create({
                 data: {
-                    full_name: payload.full_name,
+                    id_guru: payload.is_guru ? data.id_guru : null,
+                    id_siswa: !payload.is_guru ? data.id_siswa : null,
                     email: payload.email,
                     password: payload.password,
-                    created_at: new Date(),
+                    register_at: new Date(),
                     is_active: true,
-                    created_by: 0,
                 }
             });
 
@@ -176,6 +167,147 @@ export class AuthenticationService {
                     message: "User Berhasil Didaftarkan",
                     data: null,
                 }
+            };
+
+        } catch (error) {
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    message: error.message,
+                },
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    async getProfile(req: Request): Promise<any> {
+        try {
+
+            let result: any = {};
+
+            const user = await this._prismaService
+                .user
+                .findUnique({
+                    where: {
+                        id_user: parseInt(req['user']['id_user'])
+                    }
+                });
+
+            result.id_user = user.id_user;
+            result.id_guru = user.id_guru;
+            result.id_siswa = user.id_siswa;
+            result.email = user.email;
+            result.password = user.password;
+
+            if (user.id_guru && !user.id_siswa) {
+                const guru = await this._prismaService
+                    .guru
+                    .findUnique({
+                        where: {
+                            id_guru: parseInt(user.id_guru as any)
+                        }
+                    });
+
+                result.nama_lengkap = guru.nama_lengkap;
+                result.nip = guru.nip;
+                result.is_guru = true;
+            }
+
+            if (!user.id_guru && user.id_siswa) {
+                const siswa = await this._prismaService
+                    .siswa
+                    .findUnique({
+                        where: {
+                            id_siswa: parseInt(user.id_siswa as any)
+                        }
+                    });
+
+                result.nama_lengkap = siswa.nama_lengkap;
+                result.no_absen = siswa.no_absen;
+                result.is_guru = false;
+            }
+
+            return {
+                status: true,
+                message: 'OK',
+                data: result
+            }
+
+        } catch (error) {
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    message: error.message,
+                },
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    async updateProfile(req: Request, payload: AuthenticationModel.UpdateProfile): Promise<any> {
+        try {
+            let res = await this._prismaService
+                .user
+                .update({
+                    where: { id_user: parseInt(req['user']['id_user'] as any) },
+                    data: {
+                        email: payload.email,
+                        password: payload.password,
+                    }
+                });
+
+            if (!res) {
+                return {
+                    status: false,
+                    message: 'Update profile failed',
+                    data: null
+                }
+            }
+
+            if (res.id_guru && !res.id_siswa) {
+                let resGuru = await this._prismaService
+                    .guru
+                    .update({
+                        where: { id_guru: parseInt(res.id_guru as any) },
+                        data: {
+                            nama_lengkap: payload.nama_lengkap,
+                            nip: payload.nip,
+                        }
+                    });
+
+                if (!resGuru) {
+                    return {
+                        status: false,
+                        message: 'Update guru failed',
+                        data: null
+                    }
+                };
+            }
+
+            if (!res.id_guru && res.id_siswa) {
+                let resSiswa = await this._prismaService
+                    .siswa
+                    .update({
+                        where: { id_siswa: parseInt(res.id_siswa as any) },
+                        data: {
+                            nama_lengkap: payload.nama_lengkap,
+                            no_absen: payload.no_absen,
+                        }
+                    });
+
+                if (!resSiswa) {
+                    return {
+                        status: false,
+                        message: 'Update siswa failed',
+                        data: null
+                    }
+                };
+            }
+
+            return {
+                status: true,
+                message: 'OK',
+                data: res
             }
 
         } catch (error) {

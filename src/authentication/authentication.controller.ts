@@ -1,10 +1,11 @@
-import { Body, Controller, HttpStatus, Post, Res } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpStatus, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthenticationModel } from './authentication.model';
 import { AuthenticationService } from './authentication.service';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { JwtGuard } from './jwt.guard';
 
-@Controller('api/v1/authentication')
+@Controller('authentication')
 @ApiTags('Authentication')
 export class AuthenticationController {
 
@@ -12,11 +13,27 @@ export class AuthenticationController {
         private _authenticationService: AuthenticationService,
     ) { }
 
-    @Post('signInCustomer')
-    @ApiResponse({ status: 200, description: 'Success', type: AuthenticationModel.LoginCustomer })
-    async signInCustomer(@Body() body: AuthenticationModel.ILoginCustomer, @Res() res: Response): Promise<any> {
+    @Post('sign-in')
+    @ApiResponse({ status: 200, description: 'Success', type: AuthenticationModel.Login })
+    async signInCustomer(@Body() body: AuthenticationModel.ILogin, @Res() res: Response): Promise<any> {
         try {
-            const data = await this._authenticationService.loginCustomer(body.device_id, body.password);
+            const data = await this._authenticationService.login(body.email, body.password);
+            return res.status(HttpStatus.OK).json(data);
+        } catch (error) {
+            const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+            return res.status(status).json({
+                status: false,
+                message: error.message,
+                data: null,
+            });
+        }
+    }
+
+    @Post('register')
+    @ApiResponse({ status: 200, description: 'Success', type: AuthenticationModel.Login })
+    async registerUser(@Body() body: AuthenticationModel.IRegister, @Res() res: Response): Promise<any> {
+        try {
+            const data = await this._authenticationService.register(body);
             return res.status(HttpStatus.OK).json(data);
 
         } catch (error) {
@@ -29,11 +46,13 @@ export class AuthenticationController {
         }
     }
 
-    @Post('signInUser')
-    @ApiResponse({ status: 200, description: 'Success', type: AuthenticationModel.LoginUser })
-    async signInUser(@Body() body: AuthenticationModel.ILoginUser, @Res() res: Response): Promise<any> {
+    @Get('profile')
+    @UseGuards(JwtGuard)
+    @ApiBearerAuth('token')
+    @ApiResponse({ status: 200, description: 'Success', type: AuthenticationModel.GetProfile })
+    async getProfile(@Req() req: Request, @Res() res: Response): Promise<any> {
         try {
-            const data = await this._authenticationService.loginUser(body.email, body.password);
+            const data = await this._authenticationService.getProfile(req);
             return res.status(HttpStatus.OK).json(data);
 
         } catch (error) {
@@ -46,11 +65,13 @@ export class AuthenticationController {
         }
     }
 
-    @Post('registerUser')
-    @ApiResponse({ status: 200, description: 'Success', type: AuthenticationModel.LoginUser })
-    async registerUser(@Body() body: AuthenticationModel.IRegisterUser, @Res() res: Response): Promise<any> {
+    @Patch('profile')
+    @UseGuards(JwtGuard)
+    @ApiBearerAuth('token')
+    @ApiResponse({ status: 200, description: 'Success', type: AuthenticationModel.GetProfile })
+    async updateProfile(@Body() body: AuthenticationModel.UpdateProfile, @Req() req: Request, @Res() res: Response): Promise<any> {
         try {
-            const data = await this._authenticationService.registerUser(body);
+            const data = await this._authenticationService.updateProfile(req, body);
             return res.status(HttpStatus.OK).json(data);
 
         } catch (error) {
