@@ -36,8 +36,9 @@ export namespace AuthenticationModel {
         id_siswa?: number;
         id_guru?: number;
         nama_lengkap: string;
-        no_absen?: string;
         nip?: string;
+        id_kelas?: number;
+        no_absen?: string;
         email: string;
         password: string;
     }

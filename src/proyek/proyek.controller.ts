@@ -106,6 +106,25 @@ export class ProyekController {
         }
     }
 
+    @Post('add-kelompok')
+    @UseGuards(JwtGuard)
+    @ApiBearerAuth('token')
+    @ApiResponse({ status: 200, description: 'Success', type: ProyekModel.GetByIdProyek })
+    async insertKelompok(@Body() body: ProyekModel.CreateNewProyekKelompok, @Req() req: Request, @Res() res: Response): Promise<any> {
+        try {
+            const data = await this._proyekService.insertKelompok(req, body);
+            return res.status(HttpStatus.OK).json(data);
+
+        } catch (error) {
+            const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+            return res.status(status).json({
+                status: false,
+                message: error.message,
+                data: null,
+            });
+        }
+    }
+
     @Put('update-kelompok')
     @UseGuards(JwtGuard)
     @ApiBearerAuth('token')
@@ -129,11 +148,47 @@ export class ProyekController {
     @UseGuards(JwtGuard)
     @ApiBearerAuth('token')
     @ApiResponse({ status: 200, description: 'Success', type: ProyekModel.GetByIdProyek })
-    async deleteKelompok(@Query('id_kelompok_proyek') id_kelompok_proyek: number, @Res() res: Response): Promise<any> {
+    async deleteKelompok(@Param('id_kelompok_proyek') id_kelompok_proyek: number, @Res() res: Response): Promise<any> {
         try {
             const data = await this._proyekService.deleteKelompok(id_kelompok_proyek);
             return res.status(HttpStatus.OK).json(data);
 
+        } catch (error) {
+            const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+            return res.status(status).json({
+                status: false,
+                message: error.message,
+                data: null,
+            });
+        }
+    }
+
+    @Get('siswa-kelompok/:id_kelas/:id_proyek')
+    @UseGuards(JwtGuard)
+    @ApiBearerAuth('token')
+    @ApiResponse({ status: 200, description: 'Success', type: ProyekModel.GetByIdProyek })
+    async getSiswaKelompok(@Param('id_kelas') id_kelas: number, @Param('id_proyek') id_proyek: number, @Res() res: Response): Promise<any> {
+        try {
+            const data = await this._proyekService.getAllSiswaKelompok(id_kelas, id_proyek);
+            return res.status(HttpStatus.OK).json(data);
+        } catch (error) {
+            const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+            return res.status(status).json({
+                status: false,
+                message: error.message,
+                data: null,
+            });
+        }
+    }
+
+    @Get('detail-kelompok/:id_siswa/:id_proyek')
+    @UseGuards(JwtGuard)
+    @ApiBearerAuth('token')
+    @ApiResponse({ status: 200, description: 'Success', type: ProyekModel.GetByIdProyek })
+    async getSiswaKelompokBySiswa(@Param('id_siswa') id_siswa: number, @Param('id_proyek') id_proyek: number, @Res() res: Response): Promise<any> {
+        try {
+            const data = await this._proyekService.getKelompokByIdSiswa(id_siswa, id_proyek);
+            return res.status(HttpStatus.OK).json(data);
         } catch (error) {
             const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
             return res.status(status).json({
@@ -186,7 +241,7 @@ export class ProyekController {
     @UseGuards(JwtGuard)
     @ApiBearerAuth('token')
     @ApiResponse({ status: 200, description: 'Success', type: ProyekModel.GetByIdProyek })
-    async deleteSiswaKelompok(@Query('id_siswa_kelompok_proyek') id_siswa_kelompok_proyek: number, @Res() res: Response): Promise<any> {
+    async deleteSiswaKelompok(@Param('id_siswa_kelompok_proyek') id_siswa_kelompok_proyek: number, @Res() res: Response): Promise<any> {
         try {
             const data = await this._proyekService.deleteSiswaKelompok(id_siswa_kelompok_proyek);
             return res.status(HttpStatus.OK).json(data);

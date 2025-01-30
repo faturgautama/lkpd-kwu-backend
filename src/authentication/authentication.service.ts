@@ -225,6 +225,7 @@ export class AuthenticationService {
                 result.nama_lengkap = siswa.nama_lengkap;
                 result.no_absen = siswa.no_absen;
                 result.is_guru = false;
+                result.id_kelas = siswa.id_kelas;
             }
 
             return {

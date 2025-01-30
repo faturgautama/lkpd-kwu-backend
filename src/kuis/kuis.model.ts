@@ -13,6 +13,8 @@ export namespace KuisModel {
         update_at: Date;
         update_by: number;
         is_active: boolean;
+        is_answered?: boolean;
+        skor?: number
     }
 
     export class IPertanyaanKuis {
@@ -58,6 +60,7 @@ export namespace KuisModel {
 
     export class IKuisQueryParams {
         id_kelas?: number;
+        id_siswa?: number;
     }
 
     export class GetAllKuis {

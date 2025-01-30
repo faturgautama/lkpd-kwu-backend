@@ -37,26 +37,46 @@ export class KuisService {
                     }
                 });
 
+            let mappedRes: any[] = res.map((item) => {
+                return {
+                    id_kuis: item.id_kuis,
+                    id_kelas: item.id_kelas,
+                    kelas: item.kelas.kelas,
+                    judul: item.judul,
+                    start_date: item.start_date,
+                    end_date: item.end_date,
+                    kategori_kuis: item.kategori_kuis,
+                    deskripsi: item.deskripsi,
+                    create_at: item.create_at,
+                    create_by: item.create_by,
+                    update_at: item.update_at,
+                    update_by: item.update_by,
+                    is_active: item.is_active,
+                    is_answered: false,
+                    skor: 0,
+                }
+            })
+
+            if (query.id_siswa) {
+                for (const item of mappedRes) {
+                    const is_answered = await this._prismaService
+                        .nilai_kuis
+                        .findFirst({
+                            where: {
+                                id_kuis: item.id_kuis,
+                                id_siswa: parseInt(query.id_siswa as any)
+                            }
+                        });
+
+                    item.is_answered = is_answered ? true : false;
+                    item.skor = is_answered ? parseFloat(is_answered.nilai as any) : 0;
+                }
+            };
+
             return {
                 status: true,
                 message: '',
-                data: res.map((item) => {
-                    return {
-                        id_kuis: item.id_kuis,
-                        id_kelas: item.id_kelas,
-                        kelas: item.kelas.kelas,
-                        judul: item.judul,
-                        start_date: item.start_date,
-                        end_date: item.end_date,
-                        kategori_kuis: item.kategori_kuis,
-                        deskripsi: item.deskripsi,
-                        create_at: item.create_at,
-                        create_by: item.create_by,
-                        update_at: item.update_at,
-                        update_by: item.update_by,
-                        is_active: item.is_active,
-                    }
-                })
+                data: mappedRes
             }
 
         } catch (error) {
@@ -394,20 +414,21 @@ export class KuisService {
                     }
                 });
 
-            const dataJawabanKuis = await this._prismaService
-                .jawaban_kuis
-                .count({
-                    where: {
-                        id_siswa: parseInt(user.id_siswa as any),
-                        id_pertanyaan: parseInt(pertanyaan.id_pertanyaan as any),
-                        is_correct: true
-                    }
-                });
+            const dataJawabanKuis: any[] = await this._prismaService.$queryRaw`
+                SELECT COUNT(*)::integer AS skor
+                FROM jawaban_kuis jk
+                LEFT JOIN pertanyaan_kuis pk ON pk.id_pertanyaan = jk.id_pertanyaan
+                LEFT JOIN kuis ks ON ks.id_kuis = pk.id_kuis
+                WHERE 
+                    jk.id_siswa = ${parseInt(user.id_siswa as any)}
+                    AND ks.id_kuis = ${parseInt(pertanyaan.id_kuis as any)} 
+                    AND jk.is_correct = true;
+            `;
 
             let skor = 0;
 
-            if (dataJawabanKuis) {
-                skor = 20 * dataJawabanKuis;
+            if (dataJawabanKuis.length) {
+                skor = 20 * dataJawabanKuis[0].skor;
             }
 
             const dataNilaiKuis = await this._prismaService

@@ -74,6 +74,12 @@ export namespace ProyekModel {
         detail_siswa: CreateProyekSiswaKelompok[]
     }
 
+    export class CreateNewProyekKelompok {
+        id_proyek: number;
+        kelompok_proyek: string;
+        detail_siswa: CreateProyekSiswaKelompok[]
+    }
+
     export class CreateProyekSiswaKelompok {
         id_user: number;
         id_siswa: number;
