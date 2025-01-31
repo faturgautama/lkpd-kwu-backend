@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Put, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthenticationModel } from './authentication.model';
 import { AuthenticationService } from './authentication.service';
@@ -65,7 +65,7 @@ export class AuthenticationController {
         }
     }
 
-    @Patch('profile')
+    @Put('profile')
     @UseGuards(JwtGuard)
     @ApiBearerAuth('token')
     @ApiResponse({ status: 200, description: 'Success', type: AuthenticationModel.GetProfile })
