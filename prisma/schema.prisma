@@ -114,6 +114,7 @@ model kelompok_proyek {
     update_at             DateTime?
     update_by             Int?
     is_active             Boolean                 @default(true)
+    appresiasi            String?                 @default("")
     siswa_kelompok_proyek siswa_kelompok_proyek[]
 }
 
@@ -134,6 +135,7 @@ model kuis {
     judul           String
     kategori_kuis   String
     deskripsi       String?
+    type            String?           @default("essai")
     start_date      DateTime?
     end_date        DateTime?
     create_at       DateTime          @default(now())
@@ -168,7 +170,7 @@ model jawaban_kuis {
     siswa         siswa           @relation(fields: [id_siswa], references: [id_siswa], onDelete: Restrict)
     id_siswa      Int
     jawaban       String
-    is_correct    Boolean
+    is_correct    Boolean?
     submit_at     DateTime        @default(now())
 }
 

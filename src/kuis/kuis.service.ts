@@ -59,17 +59,40 @@ export class KuisService {
 
             if (query.id_siswa) {
                 for (const item of mappedRes) {
-                    const is_answered = await this._prismaService
-                        .nilai_kuis
-                        .findFirst({
+                    item.is_answered = false;
+                    item.skor = 0;
+
+                    const pertanyaans = await this._prismaService
+                        .pertanyaan_kuis
+                        .findMany({
                             where: {
-                                id_kuis: item.id_kuis,
-                                id_siswa: parseInt(query.id_siswa as any)
+                                id_kuis: parseInt(item.id_kuis)
                             }
                         });
 
-                    item.is_answered = is_answered ? true : false;
-                    item.skor = is_answered ? parseFloat(is_answered.nilai as any) : 0;
+                    for (const question of pertanyaans) {
+                        const jawaban_kuis = await this._prismaService
+                            .jawaban_kuis
+                            .findFirst({
+                                where: {
+                                    id_pertanyaan: question.id_pertanyaan,
+                                    id_siswa: parseInt(query.id_siswa as any)
+                                }
+                            });
+
+                        item.is_answered = jawaban_kuis ? true : false;
+                    }
+
+                    const dataNilaiKuis = await this._prismaService
+                        .nilai_kuis
+                        .findFirst({
+                            where: {
+                                id_siswa: parseInt(query.id_siswa as any),
+                                id_kuis: parseInt(item.id_kuis as any)
+                            }
+                        });
+
+                    item.skor = dataNilaiKuis ? parseFloat(dataNilaiKuis.nilai as any) : 0;
                 }
             };
 
@@ -80,6 +103,7 @@ export class KuisService {
             }
 
         } catch (error) {
+            console.log("error =>", error);
             throw new HttpException(
                 {
                     status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -148,6 +172,89 @@ export class KuisService {
         }
     }
 
+    async getKuisWithJawaban(id_kuis: number, id_siswa: number): Promise<any> {
+        try {
+            let res: any = await this._prismaService
+                .kuis
+                .findUnique({
+                    where: { id_kuis: parseInt(id_kuis as any) },
+                    include: {
+                        kelas: {
+                            select: {
+                                id_kelas: true,
+                                kelas: true,
+                                sekolah: true
+                            }
+                        },
+                        pertanyaan_kuis: true
+                    },
+                });
+
+            if (!res) {
+                return {
+                    status: false,
+                    message: 'Data not found!',
+                    data: null
+                }
+            }
+
+            let pertanyaan_with_answer = [];
+
+            for (const pertanyaan of res.pertanyaan_kuis) {
+                const jawaban_kuis = await this._prismaService
+                    .jawaban_kuis
+                    .findFirst({
+                        where: {
+                            id_pertanyaan: parseInt(pertanyaan.id_pertanyaan),
+                            id_siswa: parseInt(id_siswa as any)
+                        },
+                        select: {
+                            id_jawaban: true,
+                            jawaban: true,
+                            is_correct: true,
+                        }
+                    });
+
+                pertanyaan_with_answer.push({
+                    ...pertanyaan,
+                    id_jawaban: jawaban_kuis ? jawaban_kuis.id_jawaban : null,
+                    jawaban: jawaban_kuis ? jawaban_kuis.jawaban : '',
+                    is_correct: jawaban_kuis ? jawaban_kuis.is_correct : false
+                })
+            };
+
+            return {
+                status: true,
+                message: '',
+                data: {
+                    id_kuis: res.id_kuis,
+                    id_kelas: res.id_kelas,
+                    kelas: res.kelas.kelas,
+                    judul: res.judul,
+                    start_date: res.start_date,
+                    end_date: res.end_date,
+                    kategori_kuis: res.kategori_kuis,
+                    deskripsi: res.deskripsi,
+                    create_at: res.create_at,
+                    create_by: res.create_by,
+                    update_at: res.update_at,
+                    update_by: res.update_by,
+                    is_active: res.is_active,
+                    pertanyaan: pertanyaan_with_answer,
+                }
+            }
+
+        } catch (error) {
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    message: error.message,
+                },
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
     async create(req: Request, payload: KuisModel.CreateKuis): Promise<any> {
         try {
             return this._prismaService.$transaction(async (tx) => {
@@ -158,6 +265,7 @@ export class KuisService {
                     .create({
                         data: {
                             ...insertKuis,
+                            type: 'essai',
                             create_at: new Date(),
                             create_by: req['user']['id_user'],
                         }
@@ -178,12 +286,12 @@ export class KuisService {
                             data: {
                                 id_kuis: parseInt(res.id_kuis as any),
                                 pertanyaan: kel.pertanyaan,
-                                option_a: kel.option_a,
-                                option_b: kel.option_b,
-                                option_c: kel.option_c,
-                                option_d: kel.option_d,
-                                option_e: kel.option_e,
-                                correct: kel.correct,
+                                option_a: res.type == 'essai' ? '-' : kel.option_a,
+                                option_b: res.type == 'essai' ? '-' : kel.option_b,
+                                option_c: res.type == 'essai' ? '-' : kel.option_c,
+                                option_d: res.type == 'essai' ? '-' : kel.option_d,
+                                option_e: res.type == 'essai' ? '-' : kel.option_e,
+                                correct: res.type == 'essai' ? '-' : kel.correct,
                                 create_at: new Date(),
                                 create_by: req['user']['id_user'],
                             }
@@ -363,38 +471,23 @@ export class KuisService {
         }
     }
 
-    async insertJawaban(req: Request, payload: KuisModel.CreateJawabanKuis): Promise<any> {
+    async insertMultiJawaban(req: Request, payload: KuisModel.CreateJawabanKuis): Promise<any> {
         try {
-            const pertanyaan = await this._prismaService
-                .pertanyaan_kuis
-                .findUnique({
-                    where: {
-                        id_pertanyaan: parseInt(payload.id_pertanyaan as any)
-                    },
-                    select: {
-                        id_kuis: true,
-                        id_pertanyaan: true,
-                        correct: true,
-                    }
-                });
-
-            let is_correct = false;
-
-            if (payload.jawaban == pertanyaan.correct) {
-                is_correct = true;
-            }
-
             let res = await this._prismaService
                 .jawaban_kuis
-                .create({
-                    data: {
-                        ...payload,
-                        is_correct: is_correct,
-                        submit_at: new Date(),
-                    }
+                .createMany({
+                    data: payload.detail_jawaban.map((item: any) => {
+                        return {
+                            id_pertanyaan: item.id_pertanyaan,
+                            id_siswa: item.id_siswa,
+                            jawaban: item.jawaban,
+                            is_correct: false,
+                            submit_at: new Date()
+                        }
+                    })
                 });
 
-            if (!res) {
+            if (res.count < 1) {
                 return {
                     status: false,
                     message: 'Create jawaban kuis failed',
@@ -402,17 +495,42 @@ export class KuisService {
                 }
             };
 
-            const user = await this._prismaService
-                .user
-                .findFirst({
+            return {
+                status: true,
+                message: 'Insert Jawaban Berhasil',
+                data: null
+            }
+        } catch (error) {
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    message: error.message,
+                },
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    async penilaianJawaban(req: Request, payload: KuisModel.NilaiJawabanKuis): Promise<any> {
+        try {
+            let res = await this._prismaService
+                .jawaban_kuis
+                .update({
                     where: {
-                        id_siswa: parseInt(payload.id_siswa as any)
+                        id_jawaban: parseInt(payload.id_jawaban as any)
                     },
-                    select: {
-                        id_user: true,
-                        id_siswa: true,
+                    data: {
+                        is_correct: payload.is_correct
                     }
                 });
+
+            if (!res) {
+                return {
+                    status: false,
+                    message: 'Nilai jawaban kuis failed',
+                    data: null
+                }
+            };
 
             const dataJawabanKuis: any[] = await this._prismaService.$queryRaw`
                 SELECT COUNT(*)::integer AS skor
@@ -420,8 +538,8 @@ export class KuisService {
                 LEFT JOIN pertanyaan_kuis pk ON pk.id_pertanyaan = jk.id_pertanyaan
                 LEFT JOIN kuis ks ON ks.id_kuis = pk.id_kuis
                 WHERE 
-                    jk.id_siswa = ${parseInt(user.id_siswa as any)}
-                    AND ks.id_kuis = ${parseInt(pertanyaan.id_kuis as any)} 
+                    jk.id_siswa = ${parseInt(payload.id_siswa as any)}
+                    AND ks.id_kuis = ${parseInt(payload.id_kuis as any)} 
                     AND jk.is_correct = true;
             `;
 
@@ -435,8 +553,8 @@ export class KuisService {
                 .nilai_kuis
                 .findFirst({
                     where: {
-                        id_siswa: parseInt(user.id_siswa as any),
-                        id_kuis: parseInt(pertanyaan.id_kuis as any)
+                        id_siswa: parseInt(payload.id_siswa as any),
+                        id_kuis: parseInt(payload.id_kuis as any)
                     }
                 });
 
@@ -466,8 +584,8 @@ export class KuisService {
                     .nilai_kuis
                     .create({
                         data: {
-                            id_siswa: parseInt(user.id_siswa as any),
-                            id_kuis: parseInt(pertanyaan.id_kuis as any),
+                            id_siswa: parseInt(payload.id_siswa as any),
+                            id_kuis: parseInt(payload.id_kuis as any),
                             nilai: skor,
                             create_at: new Date(),
                             create_by: req['user']['id_user']
@@ -486,7 +604,94 @@ export class KuisService {
             return {
                 status: true,
                 message: 'OK',
-                data: res
+                data: skor
+            }
+        } catch (error) {
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    message: error.message,
+                },
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    async getNilaiKuis(req: Request, id_kuis: number, id_siswa: number): Promise<any> {
+        try {
+            const dataJawabanKuis: any[] = await this._prismaService.$queryRaw`
+                SELECT COUNT(*)::integer AS skor
+                FROM jawaban_kuis jk
+                LEFT JOIN pertanyaan_kuis pk ON pk.id_pertanyaan = jk.id_pertanyaan
+                LEFT JOIN kuis ks ON ks.id_kuis = pk.id_kuis
+                WHERE 
+                    jk.id_siswa = ${parseInt(id_siswa as any)}
+                    AND ks.id_kuis = ${parseInt(id_kuis as any)} 
+                    AND jk.is_correct = true;
+            `;
+
+            let skor = 0;
+
+            if (dataJawabanKuis.length) {
+                skor = 20 * dataJawabanKuis[0].skor;
+            }
+
+            const dataNilaiKuis = await this._prismaService
+                .nilai_kuis
+                .findFirst({
+                    where: {
+                        id_siswa: parseInt(id_siswa as any),
+                        id_kuis: parseInt(id_kuis as any)
+                    }
+                });
+
+            if (dataNilaiKuis) {
+                let updateNilai = await this._prismaService
+                    .nilai_kuis
+                    .update({
+                        where: {
+                            id_nilai_kuis: parseInt(dataNilaiKuis.id_nilai_kuis as any),
+                        },
+                        data: {
+                            nilai: skor
+                        }
+                    });
+
+                if (!updateNilai) {
+                    return {
+                        status: false,
+                        message: 'Update nilai kuis failed',
+                        data: null
+                    }
+                }
+            };
+
+            if (!dataNilaiKuis) {
+                let insertNilai = await this._prismaService
+                    .nilai_kuis
+                    .create({
+                        data: {
+                            id_siswa: parseInt(id_siswa as any),
+                            id_kuis: parseInt(id_kuis as any),
+                            nilai: skor,
+                            create_at: new Date(),
+                            create_by: req['user']['id_user']
+                        }
+                    });
+
+                if (!insertNilai) {
+                    return {
+                        status: false,
+                        message: 'Insert nilai kuis failed',
+                        data: null
+                    }
+                }
+            };
+
+            return {
+                status: true,
+                message: 'OK',
+                data: skor
             }
 
         } catch (error) {

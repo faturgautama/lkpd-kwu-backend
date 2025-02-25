@@ -129,8 +129,20 @@ export namespace KuisModel {
     }
 
     export class CreateJawabanKuis {
+        id_kuis: number;
+        detail_jawaban: InsertJawabanKuis[]
+    }
+
+    export class InsertJawabanKuis {
         id_pertanyaan: number;
         id_siswa: number;
         jawaban: string;
+    }
+
+    export class NilaiJawabanKuis {
+        id_kuis: number;
+        id_siswa: number;
+        id_jawaban: number;
+        is_correct: boolean;
     }
 }

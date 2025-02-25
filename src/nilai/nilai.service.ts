@@ -51,6 +51,7 @@ export class NilaiService {
                         klp.nilai_pertemuan_2,
                         klp.nilai_pertemuan_3,
                         klp.nilai_pertemuan_4,
+                        klp.appresiasi,
                         pry.create_at
                     FROM 
                         siswa_kelompok_proyek skp
@@ -121,6 +122,7 @@ export class NilaiService {
                     klp.nilai_pertemuan_2,
                     klp.nilai_pertemuan_3,
                     klp.nilai_pertemuan_4,
+                    klp.appresiasi,
                     pry.create_at
                 FROM 
                     siswa_kelompok_proyek skp

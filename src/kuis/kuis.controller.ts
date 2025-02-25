@@ -50,6 +50,25 @@ export class KuisController {
         }
     }
 
+    @Get('retrieve-with-answer/:id_kuis/:id_siswa')
+    @UseGuards(JwtGuard)
+    @ApiBearerAuth('token')
+    @ApiResponse({ status: 200, description: 'Success', type: KuisModel.GetByIdKuis })
+    async getByIdWithAnswer(@Param('id_kuis') id_kuis: number, @Param('id_siswa') id_siswa: number, @Res() res: Response): Promise<any> {
+        try {
+            const data = await this._kuisService.getKuisWithJawaban(id_kuis, id_siswa);
+            return res.status(HttpStatus.OK).json(data);
+
+        } catch (error) {
+            const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+            return res.status(status).json({
+                status: false,
+                message: error.message,
+                data: null,
+            });
+        }
+    }
+
     @Post()
     @UseGuards(JwtGuard)
     @ApiBearerAuth('token')
@@ -148,7 +167,25 @@ export class KuisController {
     @ApiResponse({ status: 200, description: 'Success', type: KuisModel.GetByIdKuis })
     async insertJawaban(@Body() body: KuisModel.CreateJawabanKuis, @Req() req: Request, @Res() res: Response): Promise<any> {
         try {
-            const data = await this._kuisService.insertJawaban(req, body);
+            const data = await this._kuisService.insertMultiJawaban(req, body);
+            return res.status(HttpStatus.OK).json(data);
+        } catch (error) {
+            const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+            return res.status(status).json({
+                status: false,
+                message: error.message,
+                data: null,
+            });
+        }
+    }
+
+    @Put('penilaian-jawaban')
+    @UseGuards(JwtGuard)
+    @ApiBearerAuth('token')
+    @ApiResponse({ status: 200, description: 'Success', type: KuisModel.GetByIdKuis })
+    async penilaianJawaban(@Body() body: KuisModel.NilaiJawabanKuis, @Req() req: Request, @Res() res: Response): Promise<any> {
+        try {
+            const data = await this._kuisService.penilaianJawaban(req, body);
             return res.status(HttpStatus.OK).json(data);
         } catch (error) {
             const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;

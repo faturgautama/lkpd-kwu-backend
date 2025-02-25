@@ -105,6 +105,7 @@ export namespace ProyekModel {
         nilai_pertemuan_2: number;
         nilai_pertemuan_3: number;
         nilai_pertemuan_4: number;
+        appresiasi: string;
     }
 
     export class UpdateProyekKelompok {

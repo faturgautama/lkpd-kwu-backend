@@ -120,7 +120,8 @@ export class ProyekService {
                                 nilai_pertemuan_1: true,
                                 nilai_pertemuan_2: true,
                                 nilai_pertemuan_3: true,
-                                nilai_pertemuan_4: true
+                                nilai_pertemuan_4: true,
+                                appresiasi: true
                             },
                         }
                     },
