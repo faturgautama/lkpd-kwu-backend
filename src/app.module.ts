@@ -25,6 +25,7 @@ import { ReferensiController } from './referensi/referensi.controller';
 import { ReferensiService } from './referensi/referensi.service';
 import { NilaiController } from './nilai/nilai.controller';
 import { NilaiService } from './nilai/nilai.service';
+import { SpreadsheetService } from './utility/spreadsheet.service';
 
 @Module({
     imports: [
@@ -59,6 +60,7 @@ import { NilaiService } from './nilai/nilai.service';
         KuisService,
         ReferensiService,
         NilaiService,
+        SpreadsheetService,
     ],
 })
 export class AppModule { }

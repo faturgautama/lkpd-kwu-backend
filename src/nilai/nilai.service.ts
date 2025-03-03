@@ -1,12 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { NilaiModel } from './nilai.model';
 import { PrismaService } from 'src/prisma.service';
+import { SpreadsheetService } from 'src/utility/spreadsheet.service';
 
 @Injectable()
 export class NilaiService {
 
     constructor(
         private _prismaService: PrismaService,
+        private _spreadsheetService: SpreadsheetService,
     ) { }
 
     async getAll(id_kelas: number): Promise<NilaiModel.GetNilaiByKelas> {
@@ -175,4 +177,69 @@ export class NilaiService {
             );
         }
     }
+
+    async syncToSheet(): Promise<NilaiModel.GetNilaiByKelas> {
+        try {
+            const siswa = await this._prismaService.siswa.findMany({
+                include: {
+                    kelas: { select: { kelas: true } }
+                },
+                orderBy: { id_siswa: 'asc' }
+            });
+
+            // Group students by kelas
+            const groupedByKelas = siswa.reduce((acc, item) => {
+                const kelas = item.kelas.kelas;
+                if (!acc[kelas]) acc[kelas] = [];
+                acc[kelas].push({
+                    no_absen: item.no_absen,
+                    nama_lengkap: item.nama_lengkap,
+                    nilai_pertemuan_1: 0,
+                    nilai_pertemuan_2: 0,
+                    nilai_pertemuan_3: 0,
+                    nilai_pertemuan_4: 0,
+                });
+                return acc;
+            }, {} as Record<string, any[]>);
+
+            const spreadsheetId = '1_DG958iPYov2vdukHm0Ha3yllKrwDoT5ld2FTUHlqTk';
+
+            for (const kelas in groupedByKelas) {
+                // Create a sheet for this kelas
+                await this._spreadsheetService.createOrUpdateSheet(spreadsheetId, kelas);
+
+                // Prepare data for this kelas
+                const header = ['No. Absen', 'Nama Siswa', '1', '2', '3', '4'];
+                const dataSource = groupedByKelas[kelas].map(item => [
+                    item.no_absen,
+                    item.nama_lengkap,
+                    item.nilai_pertemuan_1,
+                    item.nilai_pertemuan_2,
+                    item.nilai_pertemuan_3,
+                    item.nilai_pertemuan_4
+                ]);
+
+                const values = [header, ...dataSource];
+
+                // Append data to the new sheet
+                await this._spreadsheetService.appendSheetData(spreadsheetId, `${kelas}!A1`, values);
+            }
+
+            return {
+                status: true,
+                message: 'Sheets created and data synced successfully!',
+                data: null
+            };
+
+        } catch (error) {
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    message: error.message,
+                },
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
 }

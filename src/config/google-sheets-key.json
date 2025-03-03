@@ -1,0 +1,15 @@
+{
+    "web": {
+        "client_id": "11849822949-uo1o6nsk4lgeok645t8g1looeb2d8k6n.apps.googleusercontent.com",
+        "project_id": "melodic-gamma-450901-c4",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_secret": "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",
+        "client_email": "lkpd-722@melodic-gamma-450901-c4.iam.gserviceaccount.com",
+        "javascript_origins": [
+            "http://localhost:3056",
+            "https://lkpd.fgdevstudio.web.id"
+        ]
+    }
+}
