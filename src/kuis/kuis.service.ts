@@ -546,7 +546,7 @@ export class KuisService {
             let skor = 0;
 
             if (dataJawabanKuis.length) {
-                skor = 20 * dataJawabanKuis[0].skor;
+                skor = 50 * dataJawabanKuis[0].skor;
             }
 
             const dataNilaiKuis = await this._prismaService
@@ -633,7 +633,7 @@ export class KuisService {
             let skor = 0;
 
             if (dataJawabanKuis.length) {
-                skor = 20 * dataJawabanKuis[0].skor;
+                skor = 50 * dataJawabanKuis[0].skor;
             }
 
             const dataNilaiKuis = await this._prismaService
