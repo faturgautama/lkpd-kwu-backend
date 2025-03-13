@@ -196,4 +196,22 @@ export class KuisController {
             });
         }
     }
+
+    @Put('nilai-tugas')
+    @UseGuards(JwtGuard)
+    @ApiBearerAuth('token')
+    @ApiResponse({ status: 200, description: 'Success', type: KuisModel.GetByIdKuis })
+    async nilaiTugas(@Body() body: KuisModel.UpdateNilaiTugas, @Req() req: Request, @Res() res: Response): Promise<any> {
+        try {
+            const data = await this._kuisService.nilaiTugas(req, body);
+            return res.status(HttpStatus.OK).json(data);
+        } catch (error) {
+            const status = error.status || HttpStatus.INTERNAL_SERVER_ERROR;
+            return res.status(status).json({
+                status: false,
+                message: error.message,
+                data: null,
+            });
+        }
+    }
 }

@@ -26,16 +26,17 @@ model sekolah {
 }
 
 model kelas {
-    id_kelas   Int      @id @default(autoincrement())
+    id_kelas   Int        @id @default(autoincrement())
     kelas      String
-    sekolah    sekolah  @relation(fields: [id_sekolah], references: [id_sekolah], onDelete: Restrict)
+    sekolah    sekolah    @relation(fields: [id_sekolah], references: [id_sekolah], onDelete: Restrict)
     id_sekolah Int
-    is_active  Boolean  @default(true)
-    create_at  DateTime @default(now())
+    is_active  Boolean    @default(true)
+    create_at  DateTime   @default(now())
     siswa      siswa[]
     materi     materi[]
     proyek     proyek[]
     kuis       kuis[]
+    simulasi   simulasi[]
 }
 
 model guru {
@@ -61,6 +62,7 @@ model siswa {
     user                  user?
     jawaban_kuis          jawaban_kuis[]
     nilai_kuis            nilai_kuis[]
+    jawaban_simulasi      jawaban_simulasi[]
 }
 
 model user {
@@ -158,7 +160,6 @@ model pertanyaan_kuis {
     option_b      String
     option_c      String
     option_d      String
-    option_e      String
     correct       String
     create_at     DateTime       @default(now())
     create_by     Int
@@ -194,4 +195,45 @@ model referensi {
     link         String
     create_at    DateTime @default(now())
     create_by    Int
+}
+
+model simulasi {
+    id_simulasi           Int                @id @default(autoincrement())
+    kelas                 kelas              @relation(fields: [id_kelas], references: [id_kelas], onDelete: Restrict)
+    id_kelas              Int
+    judul                 String
+    petunjuk_pengerjaan   String
+    bahan_dan_alat        String
+    hasil_yang_diharapkan String
+    ilustrasi             String
+    create_at             DateTime           @default(now())
+    create_by             Int
+    update_at             DateTime?
+    update_by             Int?
+    is_active             Boolean            @default(true)
+    jawaban_simulasi      jawaban_simulasi[]
+}
+
+model jawaban_simulasi {
+    id_jawaban_simulasi Int       @id @default(autoincrement())
+    simulasi            simulasi  @relation(fields: [id_simulasi], references: [id_simulasi], onDelete: Restrict)
+    id_simulasi         Int
+    siswa               siswa     @relation(fields: [id_siswa], references: [id_siswa], onDelete: Restrict)
+    id_siswa            Int
+    untuk               String
+    dept                String
+    tanggal             String
+    waktu               String
+    dari                String
+    perusahaan          String
+    telepon             String
+    isi_pesan           String
+    keterangan          String
+    nama_penerima       String
+    nilai               Int       @default(0)
+    link_video_youtube  String?
+    create_at           DateTime  @default(now())
+    create_by           Int
+    update_at           DateTime?
+    update_by           Int?
 }

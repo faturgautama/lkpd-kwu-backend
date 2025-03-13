@@ -26,6 +26,8 @@ import { ReferensiService } from './referensi/referensi.service';
 import { NilaiController } from './nilai/nilai.controller';
 import { NilaiService } from './nilai/nilai.service';
 import { SpreadsheetService } from './utility/spreadsheet.service';
+import { SimulasiController } from './simulasi/simulasi.controller';
+import { SimulasiService } from './simulasi/simulasi.service';
 
 @Module({
     imports: [
@@ -45,6 +47,7 @@ import { SpreadsheetService } from './utility/spreadsheet.service';
         KuisController,
         ReferensiController,
         NilaiController,
+        SimulasiController,
     ],
     providers: [
         JwtStrategy,
@@ -61,6 +64,7 @@ import { SpreadsheetService } from './utility/spreadsheet.service';
         ReferensiService,
         NilaiService,
         SpreadsheetService,
+        SimulasiService
     ],
 })
 export class AppModule { }

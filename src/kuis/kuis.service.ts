@@ -20,6 +20,10 @@ export class KuisService {
                 filter.id_kelas = parseInt(query.id_kelas as any)
             };
 
+            if (query.kategori) {
+                filter.kategori_kuis = query.kategori;
+            };
+
             let res = await this._prismaService
                 .kuis
                 .findMany({
@@ -223,6 +227,8 @@ export class KuisService {
                 })
             };
 
+            const nilaiKuis = await this.getNilaiKuis(id_kuis, id_siswa);
+
             return {
                 status: true,
                 message: '',
@@ -235,12 +241,13 @@ export class KuisService {
                     end_date: res.end_date,
                     kategori_kuis: res.kategori_kuis,
                     deskripsi: res.deskripsi,
+                    skor: nilaiKuis.status ? nilaiKuis.data : 0,
                     create_at: res.create_at,
                     create_by: res.create_by,
                     update_at: res.update_at,
                     update_by: res.update_by,
                     is_active: res.is_active,
-                    pertanyaan: pertanyaan_with_answer,
+                    pertanyaan: pertanyaan_with_answer.sort((a, b) => a.id_pertanyaan - b.id_pertanyaan),
                 }
             }
 
@@ -265,7 +272,7 @@ export class KuisService {
                     .create({
                         data: {
                             ...insertKuis,
-                            type: 'essai',
+                            type: payload.kategori_kuis == 'PRE TEST' ? 'pilihan_ganda' : 'essai',
                             create_at: new Date(),
                             create_by: req['user']['id_user'],
                         }
@@ -290,7 +297,6 @@ export class KuisService {
                                 option_b: res.type == 'essai' ? '-' : kel.option_b,
                                 option_c: res.type == 'essai' ? '-' : kel.option_c,
                                 option_d: res.type == 'essai' ? '-' : kel.option_d,
-                                option_e: res.type == 'essai' ? '-' : kel.option_e,
                                 correct: res.type == 'essai' ? '-' : kel.correct,
                                 create_at: new Date(),
                                 create_by: req['user']['id_user'],
@@ -481,7 +487,7 @@ export class KuisService {
                             id_pertanyaan: item.id_pertanyaan,
                             id_siswa: item.id_siswa,
                             jawaban: item.jawaban,
-                            is_correct: false,
+                            is_correct: item.jawaban == item.correct,
                             submit_at: new Date()
                         }
                     })
@@ -617,7 +623,7 @@ export class KuisService {
         }
     }
 
-    async getNilaiKuis(req: Request, id_kuis: number, id_siswa: number): Promise<any> {
+    async getNilaiKuis(id_kuis: number, id_siswa: number): Promise<any> {
         try {
             const dataJawabanKuis: any[] = await this._prismaService.$queryRaw`
                 SELECT COUNT(*)::integer AS skor
@@ -633,7 +639,7 @@ export class KuisService {
             let skor = 0;
 
             if (dataJawabanKuis.length) {
-                skor = 50 * dataJawabanKuis[0].skor;
+                skor = 10 * dataJawabanKuis[0].skor;
             }
 
             const dataNilaiKuis = await this._prismaService
@@ -675,7 +681,7 @@ export class KuisService {
                             id_kuis: parseInt(id_kuis as any),
                             nilai: skor,
                             create_at: new Date(),
-                            create_by: req['user']['id_user']
+                            create_by: parseInt(id_siswa as any),
                         }
                     });
 
@@ -692,6 +698,75 @@ export class KuisService {
                 status: true,
                 message: 'OK',
                 data: skor
+            }
+
+        } catch (error) {
+            throw new HttpException(
+                {
+                    status: HttpStatus.INTERNAL_SERVER_ERROR,
+                    message: error.message,
+                },
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    async nilaiTugas(req: Request, payload: KuisModel.UpdateNilaiTugas): Promise<any> {
+        try {
+            let nilaiKuis = await this._prismaService
+                .nilai_kuis
+                .findFirst({
+                    where: {
+                        id_kuis: parseInt(payload.id_kuis as any),
+                        id_siswa: parseInt(payload.id_siswa as any)
+                    }
+                });
+
+            if (nilaiKuis.id_nilai_kuis) {
+                let updateNilai = await this._prismaService
+                    .nilai_kuis
+                    .update({
+                        where: {
+                            id_nilai_kuis: parseInt(nilaiKuis.id_nilai_kuis as any),
+                        },
+                        data: {
+                            nilai: parseInt(payload.nilai as any)
+                        }
+                    });
+
+                if (!updateNilai) {
+                    return {
+                        status: false,
+                        message: 'Update nilai siswa gagal',
+                        data: null
+                    }
+                };
+            }
+
+            let createNilai = await this._prismaService
+                .nilai_kuis
+                .create({
+                    data: {
+                        id_kuis: parseInt(payload.id_kuis as any),
+                        id_siswa: parseInt(payload.id_siswa as any),
+                        nilai: parseInt(payload.nilai as any),
+                        create_at: new Date(),
+                        create_by: req['user']['id_user']
+                    }
+                });
+
+            if (!createNilai) {
+                return {
+                    status: false,
+                    message: 'Update nilai siswa gagal',
+                    data: null
+                }
+            };
+
+            return {
+                status: true,
+                message: 'OK',
+                data: nilaiKuis
             }
 
         } catch (error) {

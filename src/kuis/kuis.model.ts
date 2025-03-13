@@ -61,6 +61,7 @@ export namespace KuisModel {
     export class IKuisQueryParams {
         id_kelas?: number;
         id_siswa?: number;
+        kategori?: string;
     }
 
     export class GetAllKuis {
@@ -137,6 +138,7 @@ export namespace KuisModel {
         id_pertanyaan: number;
         id_siswa: number;
         jawaban: string;
+        correct: string;
     }
 
     export class NilaiJawabanKuis {
@@ -144,5 +146,11 @@ export namespace KuisModel {
         id_siswa: number;
         id_jawaban: number;
         is_correct: boolean;
+    }
+
+    export class UpdateNilaiTugas {
+        id_kuis: number;
+        id_siswa: number;
+        nilai: number;
     }
 }
