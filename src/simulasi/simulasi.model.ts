@@ -88,5 +88,6 @@ export namespace SimulasiModel {
         nama_penerima: string;
         nilai: number;
         link_video_youtube: string;
+        type: string;
     }
 }

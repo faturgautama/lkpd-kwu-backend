@@ -232,6 +232,7 @@ model jawaban_simulasi {
     nama_penerima       String
     nilai               Int       @default(0)
     link_video_youtube  String?
+    type                String?   @default("lpt")
     create_at           DateTime  @default(now())
     create_by           Int
     update_at           DateTime?

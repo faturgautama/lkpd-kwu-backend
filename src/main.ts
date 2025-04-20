@@ -7,13 +7,12 @@ declare const module: any;
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+
     app.setGlobalPrefix('api/v1');
-
-    const prisma = app.get(PrismaService);
-    await prisma.enableShutdownHooks(app);
-
+    app.enableShutdownHooks()
     app.use(bodyParser.json({ limit: '10mb' }));
     app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+    app.enableCors();
 
     const config = new DocumentBuilder()
         .setTitle('LKPD KWU API')
@@ -34,7 +33,6 @@ async function bootstrap() {
         },
     });
 
-    app.enableCors();
     await app.listen(process.env.PORT || 3057);
 
     if (module.hot) {
