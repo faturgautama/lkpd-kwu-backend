@@ -8,10 +8,7 @@ declare const module: any;
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     app.setGlobalPrefix('api/v1');
-
-    const prisma = app.get(PrismaService);
-    await prisma.enableShutdownHooks(app);
-
+    app.enableShutdownHooks();
     app.use(bodyParser.json({ limit: '10mb' }));
     app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
